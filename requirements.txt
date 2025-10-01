@@ -19,3 +19,5 @@ marshmallow-sqlalchemy
 
 flask-migrate
 psycopg2-binary
+
+gunicorn
