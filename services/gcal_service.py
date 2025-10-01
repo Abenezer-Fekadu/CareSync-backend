@@ -1,4 +1,5 @@
 import os
+import json
 import logging
 from datetime import datetime, timedelta
 from google.oauth2 import service_account
@@ -12,16 +13,23 @@ class GoogleCalendarService:
     SCOPES = ['https://www.googleapis.com/auth/calendar']
 
     def __init__(self):
-        self.creds_path = os.getenv('GOOGLE_CREDENTIALS_PATH')
+        self.creds_json_str = os.getenv('GOOGLE_CREDENTIALS_JSON')
         self.calendar_id = os.getenv('GOOGLE_CALENDAR_ID')
-        if not self.creds_path or not self.calendar_id:
+
+        if not self.creds_json_str or not self.calendar_id:
             raise ValueError("Google Calendar credentials or ID not set in environment.")
         
         try:
-            creds = service_account.Credentials.from_service_account_file(
-                self.creds_path, scopes=self.SCOPES)
+            # Load credentials from the JSON string
+            creds_info = json.loads(self.creds_json_str)
+            creds = service_account.Credentials.from_service_account_info(
+                creds_info, scopes=self.SCOPES)
+            
             self.service = build('calendar', 'v3', credentials=creds)
-            logger.info("GoogleCalendarService initialized.")
+            logger.info("GoogleCalendarService initialized successfully.")
+        except json.JSONDecodeError:
+            logger.error("Failed to parse GOOGLE_CREDENTIALS_JSON. Please ensure it is a valid JSON string.")
+            raise
         except Exception as e:
             logger.error(f"Failed to initialize Google Calendar service: {e}")
             raise
